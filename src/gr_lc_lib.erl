@@ -13,7 +13,7 @@
 %% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 %% @doc Query processing functions.
--module(glc_lib).
+-module(gr_lc_lib).
 
 -export([
     reduce/1,
@@ -56,22 +56,22 @@ matches({all, Conds}, Event) ->
 matches({null, Const}, _Event) ->
     Const;
 matches({Key, '<', Term}, Event) ->
-    case gre:find(Key, Event) of
+    case gr_e:find(Key, Event) of
         {true, Term2} -> Term2 < Term;
         false -> false
     end;
 matches({Key, '=', Term}, Event) ->
-    case gre:find(Key, Event) of
+    case gr_e:find(Key, Event) of
         {true, Term2} -> Term2 =:= Term;
         false -> false
     end;
 matches({Key, '>', Term}, Event) ->
-    case gre:find(Key, Event) of
+    case gr_e:find(Key, Event) of
         {true, Term2} -> Term2 > Term;
         false -> false
     end;
 matches({Key, '*'}, Event) ->
-    case gre:find(Key, Event) of
+    case gr_e:find(Key, Event) of
         {true, _} -> true;
         false -> false
     end;
@@ -89,7 +89,7 @@ repeat(Query, Fun) ->
 
 
 %% @doc Return the output action of a query.
--spec onoutput(glc_ops:op()) -> output | no_return().
+-spec onoutput(gr_lc_ops:op()) -> output | no_return().
 onoutput({_, '<', _}) ->
     output;
 onoutput({_, '=', _}) ->
@@ -104,7 +104,7 @@ onoutput(Query) ->
     erlang:error(badarg, [Query]).
 
 %% @doc Modify the output action of a query.
--spec onoutput(Action :: any(), Query :: glc_ops:op()) -> no_return().
+-spec onoutput(Action :: any(), Query :: gr_lc_ops:op()) -> no_return().
 onoutput(Action, Query) ->
     erlang:error(badarg, [Action, Query]).
 
@@ -246,7 +246,7 @@ deleteall(Filter, []) ->
 
 
 %% @private Test if a term is a valid filter.
--spec is_valid(glc_ops:op()) -> boolean().
+-spec is_valid(gr_lc_ops:op()) -> boolean().
 is_valid({Field, '<', _Term}) when is_atom(Field) ->
     true;
 is_valid({Field, '=<', _Term}) when is_atom(Field) ->
@@ -280,120 +280,120 @@ valid(Term) ->
 -include_lib("eunit/include/eunit.hrl").
 
 all_one_test() ->
-    ?assertEqual(glc:eq(a, 1),
-        glc_lib:reduce(glc:all([glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:eq(a, 1),
+        gr_lc_lib:reduce(gr_lc:all([gr_lc:eq(a, 1)]))
     ).
 
 all_sort_test() ->
-    ?assertEqual(glc:all([glc:eq(a, 1), glc:eq(b, 2)]),
-        glc_lib:reduce(glc:all([glc:eq(b, 2), glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+        gr_lc_lib:reduce(gr_lc:all([gr_lc:eq(b, 2), gr_lc:eq(a, 1)]))
     ).
 
 any_one_test() ->
-    ?assertEqual(glc:eq(a, 1),
-        glc_lib:reduce(glc:any([glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:eq(a, 1),
+        gr_lc_lib:reduce(gr_lc:any([gr_lc:eq(a, 1)]))
     ).
 
 all_two_test() ->
-    ?assertEqual(glc_lib:reduce(glc:all([glc:wc(a), glc:nf(b)])),
-       glc_lib:reduce(glc:any([
-                    glc:all([glc:wc(a)]), 
-                    glc:all([glc:wc(a), glc:nf(b)])]))
+    ?assertEqual(gr_lc_lib:reduce(gr_lc:all([gr_lc:wc(a), gr_lc:nf(b)])),
+       gr_lc_lib:reduce(gr_lc:any([
+                    gr_lc:all([gr_lc:wc(a)]), 
+                    gr_lc:all([gr_lc:wc(a), gr_lc:nf(b)])]))
     ).
 
 any_sort_test() ->
-    ?assertEqual(glc:any([glc:eq(a, 1), glc:eq(b, 2)]),
-        glc_lib:reduce(glc:any([glc:eq(b, 2), glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+        gr_lc_lib:reduce(gr_lc:any([gr_lc:eq(b, 2), gr_lc:eq(a, 1)]))
     ).
 
 all_nest_test() ->
-    ?assertEqual(glc:all([glc:eq(a, 1), glc:eq(b, 2)]),
-        glc_lib:reduce(glc:all([glc:eq(a, 1), glc:all([glc:eq(b, 2)])]))
+    ?assertEqual(gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+        gr_lc_lib:reduce(gr_lc:all([gr_lc:eq(a, 1), gr_lc:all([gr_lc:eq(b, 2)])]))
     ),
-    ?assertEqual(glc:all([glc:eq(a, 1), glc:eq(b, 2), glc:eq(c, 3)]),
-        glc_lib:reduce(glc:all([glc:eq(c, 3),
-            glc:all([glc:eq(a, 1),
-                glc:all([glc:eq(b, 2)])])]))
+    ?assertEqual(gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(b, 2), gr_lc:eq(c, 3)]),
+        gr_lc_lib:reduce(gr_lc:all([gr_lc:eq(c, 3),
+            gr_lc:all([gr_lc:eq(a, 1),
+                gr_lc:all([gr_lc:eq(b, 2)])])]))
     ).
 
 any_nest_test() ->
-    ?assertEqual(glc:any([glc:eq(a, 1), glc:eq(b, 2)]),
-        glc_lib:reduce(glc:any([glc:eq(a, 1), glc:any([glc:eq(b, 2)])]))
+    ?assertEqual(gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+        gr_lc_lib:reduce(gr_lc:any([gr_lc:eq(a, 1), gr_lc:any([gr_lc:eq(b, 2)])]))
     ),
-    ?assertEqual(glc:any([glc:eq(a, 1), glc:eq(b, 2), glc:eq(c, 3)]),
-        glc_lib:reduce(glc:any([glc:eq(c, 3),
-            glc:any([glc:eq(a, 1),
-                glc:any([glc:eq(b, 2)])])]))
+    ?assertEqual(gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(b, 2), gr_lc:eq(c, 3)]),
+        gr_lc_lib:reduce(gr_lc:any([gr_lc:eq(c, 3),
+            gr_lc:any([gr_lc:eq(a, 1),
+                gr_lc:any([gr_lc:eq(b, 2)])])]))
     ).
 
 all_equiv_test() ->
-    ?assertEqual(glc:eq(a, 1),
-        glc_lib:reduce(glc:all([glc:eq(a, 1), glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:eq(a, 1),
+        gr_lc_lib:reduce(gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(a, 1)]))
     ).
 
 any_equiv_test() ->
-    ?assertEqual(glc:eq(a, 1),
-        glc_lib:reduce(glc:any([glc:eq(a, 1), glc:eq(a, 1)]))
+    ?assertEqual(gr_lc:eq(a, 1),
+        gr_lc_lib:reduce(gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(a, 1)]))
     ).
 
 any_required_test() ->
     ?assertEqual(
-        glc:all([
-            glc:any([glc:nf(d), glc:eq(b, 2), glc:eq(c, 3)]),
-            glc:eq(a, 1)
+        gr_lc:all([
+            gr_lc:any([gr_lc:nf(d), gr_lc:eq(b, 2), gr_lc:eq(c, 3)]),
+            gr_lc:eq(a, 1)
         ]),
-        glc_lib:reduce(
-            glc:any([
-                glc:all([glc:eq(a, 1), glc:nf(d)]),
-                glc:all([glc:eq(a, 1), glc:eq(b, 2)]),
-                glc:all([glc:eq(a, 1), glc:eq(c, 3)])]))
+        gr_lc_lib:reduce(
+            gr_lc:any([
+                gr_lc:all([gr_lc:eq(a, 1), gr_lc:nf(d)]),
+                gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+                gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(c, 3)])]))
     ).
         
 
 all_common_test() ->
     ?assertEqual(
-        glc:all([glc:eq(a, 1), glc:eq(b, 2), glc:eq(c, 3)]),
-        glc_lib:reduce(
-            glc:all([
-                glc:any([glc:eq(a, 1), glc:eq(b, 2)]),
-                glc:any([glc:eq(a, 1), glc:eq(c, 3)])]))
+        gr_lc:all([gr_lc:eq(a, 1), gr_lc:eq(b, 2), gr_lc:eq(c, 3)]),
+        gr_lc_lib:reduce(
+            gr_lc:all([
+                gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(b, 2)]),
+                gr_lc:any([gr_lc:eq(a, 1), gr_lc:eq(c, 3)])]))
     ).
 
 delete_from_all_test() ->
     ?assertEqual(
-        glc:all([glc:eq(b,2)]),
+        gr_lc:all([gr_lc:eq(b,2)]),
         deleteall(
-            glc:all([glc:eq(a, 1),glc:eq(b,2)]), [glc:eq(a, 1), glc:nf(a)])
+            gr_lc:all([gr_lc:eq(a, 1),gr_lc:eq(b,2)]), [gr_lc:eq(a, 1), gr_lc:nf(a)])
     ).
 
 delete_from_any_test() ->
     ?assertEqual(
-        glc:any([glc:eq(b,2)]),
+        gr_lc:any([gr_lc:eq(b,2)]),
         deleteall(
-            glc:any([glc:eq(a, 1),glc:eq(b,2)]), [glc:eq(a, 1), glc:wc(a)])
+            gr_lc:any([gr_lc:eq(a, 1),gr_lc:eq(b,2)]), [gr_lc:eq(a, 1), gr_lc:wc(a)])
     ).
 
 default_is_output_test_() ->
-    [?_assertEqual(output, glc_lib:onoutput(glc:lt(a, 1))),
-     ?_assertEqual(output, glc_lib:onoutput(glc:eq(a, 1))),
-     ?_assertEqual(output, glc_lib:onoutput(glc:gt(a, 1))),
-     ?_assertEqual(output, glc_lib:onoutput(glc:wc(a))),
-     ?_assertEqual(output, glc_lib:onoutput(glc:nf(a)))
+    [?_assertEqual(output, gr_lc_lib:onoutput(gr_lc:lt(a, 1))),
+     ?_assertEqual(output, gr_lc_lib:onoutput(gr_lc:eq(a, 1))),
+     ?_assertEqual(output, gr_lc_lib:onoutput(gr_lc:gt(a, 1))),
+     ?_assertEqual(output, gr_lc_lib:onoutput(gr_lc:wc(a))),
+     ?_assertEqual(output, gr_lc_lib:onoutput(gr_lc:nf(a)))
     ].
 
 -ifdef(PROPER).
 
 
 prop_reduce_returns() ->
-    ?FORALL(Query, glc_ops:op(),
-        returns(fun() -> glc_lib:reduce(Query) end)).
+    ?FORALL(Query, gr_lc_ops:op(),
+        returns(fun() -> gr_lc_lib:reduce(Query) end)).
 
 reduce_returns_test() ->
     ?assert(proper:quickcheck(prop_reduce_returns())).
 
 prop_matches_returns_boolean() ->
-    ?FORALL({Query, Event}, {glc_ops:op(), [{atom(), term()}]},
-        is_boolean(glc_lib:matches(Query, gre:make(Event, [list])))).
+    ?FORALL({Query, Event}, {gr_lc_ops:op(), [{atom(), term()}]},
+        is_boolean(gr_lc_lib:matches(Query, gr_e:make(Event, [list])))).
 
 matches_returns_boolean_test() ->
     ?assert(proper:quickcheck(prop_matches_returns_boolean())).
